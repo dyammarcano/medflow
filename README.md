@@ -75,3 +75,13 @@ podman run --name medflow-postgres -d \
 -p 5432:5432 \
 docker.io/postgres:latest
 ```
+
+## ✅ Paso 2: Ejecutar NATS JetStream con Podman
+
+```bash
+podman run --name nats-jetstream -d \
+-p 4222:4222 \
+-p 8222:8222 \
+docker.io/nats:latest \
+-js -D -m 8222
+```

@@ -3,16 +3,19 @@ package service
 import (
 	"database/sql"
 	"encoding/json"
-	"github.com/spf13/cobra"
+	"fmt"
 	"log"
-	"medflow/internal/common"
-	"medflow/internal/helpers"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
 	_ "github.com/lib/pq"
 	"github.com/nats-io/nats.go"
+	"github.com/spf13/cobra"
+
+	"medflow/internal/common"
+	"medflow/internal/helpers"
 )
 
 var clients = make(map[*websocket.Conn]bool)
@@ -21,32 +24,45 @@ var upgrade = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
-func ClinicalMonitorService(cmd *cobra.Command, args []string) error {
-	db, err := sql.Open("postgres", "postgres://user:password@localhost:5432/medflow?sslmode=disable")
+func ClinicalMonitorService(cmd *cobra.Command, _ []string) error {
+	database, err := sql.Open("postgres", "postgres://user:password@localhost:5432/medflow?sslmode=disable")
 	if err != nil {
-		return err
+		return fmt.Errorf("database connection error: %w", err)
 	}
-	defer func(db *sql.DB) {
-		if err := db.Close(); err != nil {
-			log.Fatal("Close error:", err)
-		}
-	}(db)
+	defer func(database *sql.DB) {
+		_ = database.Close()
+	}(database)
 
-	if err := createTable(db); err != nil {
-		return err
+	if err := database.PingContext(cmd.Context()); err != nil {
+		return fmt.Errorf("database ping error: %w", err)
 	}
 
-	nc, err := nats.Connect(nats.DefaultURL)
+	if err := createTable(database); err != nil {
+		return fmt.Errorf("create table error: %w", err)
+	}
+
+	natsConn, err := nats.Connect(nats.DefaultURL)
 	if err != nil {
-		return err
+		return fmt.Errorf("nats connection error: %w", err)
 	}
+	defer natsConn.Close()
 
-	js, err := nc.JetStream()
+	jetStream, err := natsConn.JetStream()
 	if err != nil {
-		return err
+		return fmt.Errorf("jetstream error: %w", err)
 	}
 
-	_, err = js.Subscribe("operation.*.data", func(msg *nats.Msg) {
+	// Ensure stream exists
+	_, err = jetStream.AddStream(&nats.StreamConfig{
+		Name:     "OPERATION_STREAM",
+		Subjects: []string{"operation.*.data"},
+		Storage:  nats.FileStorage,
+	})
+	if err != nil && !strings.Contains(err.Error(), "stream name already in use") {
+		return fmt.Errorf("error creating stream: %w", err)
+	}
+
+	_, err = jetStream.Subscribe("operation.*.data", func(msg *nats.Msg) {
 		var event common.ClinicalEvent
 		if err := json.Unmarshal(msg.Data, &event); err != nil {
 			log.Println("Invalid JSON:", err)
@@ -54,7 +70,7 @@ func ClinicalMonitorService(cmd *cobra.Command, args []string) error {
 		}
 
 		event.Timestamp = time.Now().Format(time.RFC3339)
-		if err := helpers.SaveEventToPostgres(db, event); err != nil {
+		if err := helpers.SaveEventToPostgres(database, event); err != nil {
 			log.Println("Save event error:", err)
 			return
 		}
@@ -62,7 +78,7 @@ func ClinicalMonitorService(cmd *cobra.Command, args []string) error {
 		broadcast <- event
 	}, nats.Durable("monitor-durable"), nats.ManualAck())
 	if err != nil {
-		return err
+		return fmt.Errorf("subscription error: %w", err)
 	}
 
 	http.HandleFunc("/ws", handleWebSocket)
@@ -83,10 +99,7 @@ func createTable(db *sql.DB) error {
 		data JSONB,
 		metadata JSONB
 	)`)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -96,6 +109,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	clients[conn] = true
+	log.Println("Client connected")
 }
 
 func handleMessages() {
@@ -103,13 +117,9 @@ func handleMessages() {
 		event := <-broadcast
 		message, _ := json.Marshal(event)
 		for client := range clients {
-			err := client.WriteMessage(websocket.TextMessage, message)
-			if err != nil {
+			if err := client.WriteMessage(websocket.TextMessage, message); err != nil {
 				log.Println("WebSocket write error:", err)
-				if err := client.Close(); err != nil {
-					log.Println("WebSocket close error:", err)
-					return
-				}
+				_ = client.Close()
 				delete(clients, client)
 			}
 		}
