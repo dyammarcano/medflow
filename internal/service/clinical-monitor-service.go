@@ -41,19 +41,14 @@ func ClinicalMonitorService(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("create table error: %w", err)
 	}
 
-	natsConn, err := nats.Connect(nats.DefaultURL)
+	natsConn, js, err := helpers.ConnectToNATS()
 	if err != nil {
 		return fmt.Errorf("nats connection error: %w", err)
 	}
 	defer natsConn.Close()
 
-	jetStream, err := natsConn.JetStream()
-	if err != nil {
-		return fmt.Errorf("jetstream error: %w", err)
-	}
-
 	// Ensure stream exists
-	_, err = jetStream.AddStream(&nats.StreamConfig{
+	_, err = js.AddStream(&nats.StreamConfig{
 		Name:     "OPERATION_STREAM",
 		Subjects: []string{common.SubjectOperationWildcardData},
 		Storage:  nats.FileStorage,
@@ -62,7 +57,7 @@ func ClinicalMonitorService(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error creating stream: %w", err)
 	}
 
-	_, err = jetStream.Subscribe(common.SubjectOperationWildcardData, func(msg *nats.Msg) {
+	_, err = js.Subscribe(common.SubjectOperationWildcardData, func(msg *nats.Msg) {
 		var event common.PatientEvent
 		if err := json.Unmarshal(msg.Data, &event); err != nil {
 			log.Println("Invalid JSON:", err)

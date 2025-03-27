@@ -58,8 +58,7 @@ func StartPatientIntakeService(cmd *cobra.Command, _ []string) error {
 			return
 		}
 
-		newData, _ := json.Marshal(event)
-		_, err = js.Publish("operation.stage1.data", newData)
+		_, err = js.Publish("operation.stage1.data", []byte(event.String()))
 		if err != nil {
 			log.Println("Failed to publish to next stage:", err)
 		}
