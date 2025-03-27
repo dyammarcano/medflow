@@ -9,6 +9,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/inovacc/ksuid v1.0.0
 	github.com/lib/pq v1.10.9
+	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/nats-io/nats.go v1.40.1
 	github.com/spf13/cobra v1.9.1
 	modernc.org/sqlite v1.36.2

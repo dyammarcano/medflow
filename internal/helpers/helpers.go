@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/google/uuid"
@@ -41,8 +40,7 @@ func InitSQLite(service string) (*sql.DB, error) {
 		step TEXT,
 		status TEXT,
 		timestamp TEXT,
-		data TEXT,
-		metadata TEXT
+		data JSONB
 	)`)
 	if err != nil {
 		return nil, err
@@ -50,41 +48,21 @@ func InitSQLite(service string) (*sql.DB, error) {
 	return db, nil
 }
 
-func SaveEventToSQLite(db *sql.DB, event common.ClinicalEvent) error {
-	dataJSON, err := json.Marshal(event.Data)
-	if err != nil {
-		return err
-	}
-
-	metaJSON, err := json.Marshal(event.Metadata)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`INSERT INTO eventos_procesados
-		(parent_id, current_id, step, status, timestamp, data, metadata)
+func SaveEventToSQLite(db *sql.DB, event common.PatientEvent) error {
+	_, err := db.Exec(`INSERT INTO eventos_procesados
+		(parent_id, current_id, step, status, timestamp, data)
 		VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		event.ParentID, event.CurrentID, event.Step, event.Status, time.Now().Format(time.RFC3339), string(dataJSON), string(metaJSON))
+		event.PatientID, event.CurrentID, event.Step, event.Status, time.Now().Format(time.RFC3339), event.String())
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func SaveEventToPostgres(db *sql.DB, event common.ClinicalEvent) error {
-	dataJSON, err := json.Marshal(event.Data)
-	if err != nil {
-		return err
-	}
-
-	metaJSON, err := json.Marshal(event.Metadata)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`INSERT INTO eventos (parent_id, current_id, step, status, timestamp, data, metadata)
+func SaveEventToPostgres(db *sql.DB, event common.PatientEvent) error {
+	_, err := db.Exec(`INSERT INTO eventos (parent_id, current_id, step, status, timestamp, data)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-		event.ParentID, event.CurrentID, event.Step, event.Status, event.Timestamp, dataJSON, metaJSON)
+		event.PatientID, event.CurrentID, event.Step, event.Status, event.Timestamp, event.String())
 	if err != nil {
 		return err
 	}

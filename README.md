@@ -67,6 +67,7 @@ Se suscribe a operation.response.data para guardar respuestas de exámenes.
 Expone WebSocket para frontend con checklist en tiempo real.
 
 ## 🔧 Paso 1: Ejecutar PostgreSQL con Podman
+
 ```bash
 podman run --name medflow-postgres -d \
 -e POSTGRES_USER=user \

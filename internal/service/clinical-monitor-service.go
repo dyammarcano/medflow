@@ -19,7 +19,7 @@ import (
 )
 
 var clients = make(map[*websocket.Conn]bool)
-var broadcast = make(chan common.ClinicalEvent)
+var broadcast = make(chan common.PatientEvent)
 var upgrade = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
@@ -55,15 +55,15 @@ func ClinicalMonitorService(cmd *cobra.Command, _ []string) error {
 	// Ensure stream exists
 	_, err = jetStream.AddStream(&nats.StreamConfig{
 		Name:     "OPERATION_STREAM",
-		Subjects: []string{"operation.*.data"},
+		Subjects: []string{common.SubjectOperationWildcardData},
 		Storage:  nats.FileStorage,
 	})
 	if err != nil && !strings.Contains(err.Error(), "stream name already in use") {
 		return fmt.Errorf("error creating stream: %w", err)
 	}
 
-	_, err = jetStream.Subscribe("operation.*.data", func(msg *nats.Msg) {
-		var event common.ClinicalEvent
+	_, err = jetStream.Subscribe(common.SubjectOperationWildcardData, func(msg *nats.Msg) {
+		var event common.PatientEvent
 		if err := json.Unmarshal(msg.Data, &event); err != nil {
 			log.Println("Invalid JSON:", err)
 			return
@@ -96,8 +96,7 @@ func createTable(db *sql.DB) error {
 		step TEXT,
 		status TEXT,
 		timestamp TEXT,
-		data JSONB,
-		metadata JSONB
+		data JSONB
 	)`)
 	return err
 }

@@ -4,13 +4,14 @@ import "encoding/json"
 
 const (
 	// SubjectOperationWildcardData operation.*.data
-	SubjectOperationWildcardData = "operation.%s.data"
+	SubjectOperationWildcardData = "operation.*.data"
 
 	// SubjectOperationResponseData operation.response.data
 	SubjectOperationResponseData = "operation.response.data"
 
 	// SubjectOperationIncomingData operation.incoming.data
 	SubjectOperationIncomingData = "operation.incoming.data"
+
 	// SubjectOperationErrorData operation.error.dada
 	SubjectOperationErrorData = "operation.error.data"
 
