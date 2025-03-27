@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"log"
 	"medflow/internal/common"
+	"medflow/internal/helpers"
 	"net/http"
 	"time"
 
@@ -53,7 +54,11 @@ func ClinicalMonitorService(cmd *cobra.Command, args []string) error {
 		}
 
 		event.Timestamp = time.Now().Format(time.RFC3339)
-		saveEventToPostgres(db, event)
+		if err := helpers.SaveEventToPostgres(db, event); err != nil {
+			log.Println("Save event error:", err)
+			return
+		}
+
 		broadcast <- event
 	}, nats.Durable("monitor-durable"), nats.ManualAck())
 	if err != nil {
@@ -82,25 +87,6 @@ func createTable(db *sql.DB) error {
 		return err
 	}
 	return nil
-}
-
-func saveEventToPostgres(db *sql.DB, event common.ClinicalEvent) {
-	dataJSON, err := json.Marshal(event.Data)
-	if err != nil {
-		log.Println("JSON marshal error:", err)
-	}
-
-	metaJSON, err := json.Marshal(event.Metadata)
-	if err != nil {
-		log.Println("JSON marshal error:", err)
-	}
-
-	_, err = db.Exec(`INSERT INTO eventos (parent_id, current_id, step, status, timestamp, data, metadata)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-		event.ParentID, event.CurrentID, event.Step, event.Status, event.Timestamp, dataJSON, metaJSON)
-	if err != nil {
-		log.Println("Insert error:", err)
-	}
 }
 
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {

@@ -1,5 +1,7 @@
 package common
 
+import "encoding/json"
+
 const (
 	// SubjectOperationWildcardData operation.*.data
 	SubjectOperationWildcardData = "operation.%s.data"
@@ -45,4 +47,31 @@ type ExamEvent struct {
 	Status    string            `json:"status"`
 	Timestamp string            `json:"timestamp"`
 	Metadata  map[string]string `json:"metadata"`
+}
+
+type PatientEvent struct {
+	CurrentID string `json:"current_id"`
+	PatientID string `json:"patient_id"`
+	//ParentID  string  `json:"parent_id"`
+	Step      string  `json:"step"`
+	Status    string  `json:"status"`
+	Timestamp string  `json:"timestamp"`
+	Patient   Patient `json:"patient"`
+}
+
+func (p *PatientEvent) String() string {
+	d, _ := json.Marshal(p)
+	return string(d)
+}
+
+type Patient struct {
+	ID         string `json:"id"`
+	FirstName  string `json:"first_name"`
+	SecondName string `json:"second_name"`
+	MiddleName string `json:"middle_name"`
+	LastName   string `json:"last_name"`
+	Age        int    `json:"age"`
+	Phone      string `json:"phone"`
+	Email      string `json:"email"`
+	Address    string `json:"address"`
 }

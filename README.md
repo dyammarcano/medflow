@@ -65,3 +65,13 @@ Guarda todos los eventos en PostgreSQL.
 Se suscribe a operation.response.data para guardar respuestas de exámenes.
 
 Expone WebSocket para frontend con checklist en tiempo real.
+
+## 🔧 Paso 1: Ejecutar PostgreSQL con Podman
+```bash
+podman run --name medflow-postgres -d \
+-e POSTGRES_USER=user \
+-e POSTGRES_PASSWORD=password \
+-e POSTGRES_DB=medflow \
+-p 5432:5432 \
+docker.io/postgres:latest
+```
