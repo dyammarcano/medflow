@@ -38,7 +38,7 @@ var rootCmd = &cobra.Command{
 	Short: "A brief description of your application",
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	Run: func(cmd *cobra.Command, args []string) {},
+	//RunE: func(cmd *cobra.Command, args []string) error{},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
