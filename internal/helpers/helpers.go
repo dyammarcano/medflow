@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
-	"github.com/google/uuid"
 	"github.com/inovacc/ksuid"
 	"medflow/internal/common"
 	"time"
@@ -72,9 +71,9 @@ func SaveEventToPostgres(db *sql.DB, event common.PatientEvent) error {
 func GeneratePatient() common.PatientEvent {
 	return common.PatientEvent{
 		CurrentID: ksuid.NewString(),
-		PatientID: uuid.NewString(),
-		Step:      "initial_stage",
-		Status:    "pending",
+		PatientID: ksuid.NewString(),
+		Step:      "patient-intake",
+		Status:    "initiated",
 		Timestamp: time.Now().Format(time.RFC3339),
 		Patient: common.Patient{
 			ID:         cnpj.FormatCNPJ(cnpj.GenerateCNPJ()),

@@ -29,6 +29,9 @@ const (
 
 	// SubjectOperationPriority1Data operation.priority1.data
 	SubjectOperationPriority1Data = "operation.priority1.data"
+
+	// SubjectOperationRequestData operation.request.data
+	SubjectOperationRequestData = "operation.request.data"
 )
 
 type ClinicalEvent struct {
@@ -65,14 +68,24 @@ func (p *PatientEvent) String() string {
 	return string(d)
 }
 
+func (p *PatientEvent) Bytes() []byte {
+	d, _ := json.Marshal(p)
+	return d
+}
+
+func (p *PatientEvent) Decode(data []byte) error {
+	return json.Unmarshal(data, p)
+}
+
 type Patient struct {
-	ID         string `json:"id"`
-	FirstName  string `json:"first_name"`
-	SecondName string `json:"second_name"`
-	MiddleName string `json:"middle_name"`
-	LastName   string `json:"last_name"`
-	Age        int    `json:"age"`
-	Phone      string `json:"phone"`
-	Email      string `json:"email"`
-	Address    string `json:"address"`
+	ID          string `json:"id"`
+	FirstName   string `json:"first_name"`
+	SecondName  string `json:"second_name"`
+	MiddleName  string `json:"middle_name"`
+	LastName    string `json:"last_name"`
+	Age         int    `json:"age"`
+	Phone       string `json:"phone"`
+	Email       string `json:"email"`
+	Address     string `json:"address"`
+	AddressCode string `json:"address_code"`
 }

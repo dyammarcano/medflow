@@ -5,13 +5,41 @@ monitoreo central.
 
 ## 🏥 Flujo de Entrada del Paciente:
 
-|           Etapa           |       Nombre del Servicio        |        Topic NATS        |
-|:-------------------------:|:--------------------------------:|:------------------------:|
-|      Entrada inicial      |     	patient-intake-service	     | operation.incoming.data  |
-|         Registro	         |  patient-registration-service	   |  operation.stage1.data   |
-|    Evaluación médica	     |   medical-assessment-service	    |  operation.stage2.data   |
-| Internación / Aprobación	 | admission-authorization-service	 |  operation.stage3.data   |
-|    Casos prioritarios	    |  priority-case-handler-service	  | operation.priority1.data |
+|           Etapa           |       Nombre del Servicio        |                   Topic NATS                    |
+|:-------------------------:|:--------------------------------:|:-----------------------------------------------:|
+|      Entrada inicial      |     	patient-intake-service	     | operation.request.data, operation.incoming.data |
+|    Validacion inicial	    |     patient-request-service	     |             operation.request.data              |
+|         Registro	         |  patient-registration-service	   |              operation.stage1.data              |
+|    Evaluación médica	     |   medical-assessment-service	    |              operation.stage2.data              |
+| Internación / Aprobación	 | admission-authorization-service	 |              operation.stage3.data              |
+|    Casos prioritarios	    |  priority-case-handler-service	  |            operation.priority1.data             |
+
+
+## Flujo de Eventos:
+
+1. El paciente llega al hospital y se registra en el sistema.
+2. Se valida la información del paciente.
+3. Se registra al paciente en la base de datos.
+4. Se realiza la evaluación médica.
+5. Se autoriza la internación.
+6. Si el caso es prioritario, se envía a un handler especial.
+7. Se envía el paciente a la sala de espera.
+8. Se envía el paciente a la sala de internación.
+9. Se envía el paciente a la sala de cuidados intensivos.
+10. Se envía el paciente a la sala de recuperación.
+11. Se envía el paciente a la sala de observación.
+12. Se envía el paciente a la sala de cirugía o procedimientos.
+13. Se envía el paciente a la sala de exámenes.
+14. Se envía el paciente a la sala de diagnóstico.
+15. Se envía el paciente a la sala de tratamiento.
+16. Se envía el paciente a la sala de alta.
+17. Se envía el paciente a la sala de seguimiento.
+18. Se envía el paciente a la sala de emergencia.
+19. Se envía el paciente a la sala de urgencias.
+20. Se envía el paciente a la sala de cuidados paliativos.
+21. Se envía el paciente a la sala de cuidados a largo plazo.
+22. Se envía el paciente a la sala de cuidados a corto plazo.
+23. Se envía el paciente a la sala de cuidados a mediano plazo.
 
 ## 🧪 Servicios de Examen:
 
